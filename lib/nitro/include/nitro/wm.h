@@ -271,6 +271,9 @@ int func_0208195c(WMCallbackFunc callback, void *recvBuf, u16 recvBufSize, void 
 int func_02081998(WMCallbackFunc callback, void *arg, const void *sendData, u16 sendDataSize, u16 destBitmap, u16 port,
                   u16 prio);
 int func_02081a68(WMCallbackFunc callback); // WM_EndMP
+// Queues a DCF transmission to the six-byte destination address; buffer remains borrowed until completion.
+// The original SDK symbol name is not established here.
+int func_02081b18(WMCallbackFunc callback, const u8 *dst, const void *buffer, u16 byteLength);
 // WM_StartDataSharing
 int func_02081bd8(WMDataSharingInfo *dsi, u16 port, u16 aidBitmap, u16 dataLength, BOOL doubleMode);
 int func_02081dbc(WMDataSharingInfo *dsi);                                                    // WM_EndDataSharing
@@ -282,5 +285,24 @@ int func_020824bc(WMCallbackFunc callback, const void *userGameInfo, u16 gameInf
 int func_02082560(WMCallbackFunc callback, u16 tableNumber, u16 camLifeTime, u16 frameLifeTime, u16 mpLifeTime);
 // WM_MeasureChannel
 int func_0208259c(WMCallbackFunc callback, u16 ccaMode, u16 edThreshold, u16 channel, u16 measureTime);
+
+// NitroSDK's WM calls that WCM makes, named by the WM API ids of the callbacks that follow them in WCM (3 enable,
+// 4 disable, 5 power on, 6 power off), so the names are inferred rather than read from the ROM
+// WM_Init: sets up the WM work in buf, returning 0 when it is done
+s32 func_02080758(void *buf, u16 dmaNo);
+// WM_Finish: 0 once the WM work is released
+BOOL func_02080908(void);
+// WMi_GetStatusAddress: the WM state word (0 stopped, 1 ready, 2 idle), which the caller invalidates from the cache
+void *func_02080dbc(void);
+// WM_Enable, WM_Disable, WM_PowerOn and WM_PowerOff
+int func_020812fc(WMCallbackFunc callback);
+int func_02081348(WMCallbackFunc callback);
+int func_02081370(WMCallbackFunc callback);
+int func_02081398(WMCallbackFunc callback);
+// WM_StartDCF and WM_EndDCF
+int func_02081ab0(WMCallbackFunc callback, void *buffer, u16 bufferSize);
+int func_02081b94(WMCallbackFunc callback);
+// WM_SetWEPKeyEx, WEP mode and key
+int func_02082470(WMCallbackFunc callback, u8 mode, u8 argument, void *data);
 
 #endif // POKEBW2_NITRO_WM_H
