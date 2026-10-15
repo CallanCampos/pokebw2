@@ -16,16 +16,18 @@
 
 typedef u32 CPSInAddr;
 
-// What CPS_Startup takes
+// Startup copies this configuration's values and callbacks; it retains lan_buf, not this structure.
+// The caller keeps LAN storage available while CPS uses it.
 typedef struct CPSConfig {
     u32 mode;                 // CPS_MODE_*
     void *(*alloc)(u32 size); // Both or neither
     void (*free)(void *ptr);
-    void (*dhcp_callback)(void); // Called when DHCP gives up, or when the address is static
+    // Called on the DHCP fallback/static-address path, before the subsequent address collision check.
+    void (*dhcp_callback)(void);
     BOOL (*link_is_on)(void);
     u64 random_seed; // 0 to seed with the tick count
     u8 *lan_buf;     // Where the received frames wait for the receiving thread
-    u32 lan_buflen;
+    u32 lan_buflen; // LAN storage capacity in bytes
     u32 mymss;              // 0 for 1460
     CPSInAddr requested_ip; // The address DHCP asks for, or 0
     u32 yield_wait;         // Milliseconds that a wait sleeps for, or 0 to only yield
@@ -129,7 +131,8 @@ extern MATHRandContext32 CPSiRand; // Seeded by CPS_Startup; the SSL layer draws
 // 0x020050ac
 extern const char CPSi_Signature[];
 
-// Called with a DHCP-given address; FALSE rejects it
+// Tests the selected DHCP address without an address argument; FALSE rejects it.
+// Invoked by the scavenger during acquisition, renewal and rebinding.
 void CPS_SetAddressCheckCallback(BOOL (*callback)(void));
 // Starts the receive, scavenger and ACK threads over the config's LAN buffer
 void CPS_Startup(CPSConfig *config);
@@ -159,7 +162,9 @@ void CPS_SocUse(void);
 void CPS_SocRelease(void);
 // Gives another thread the caller's socket
 void CPS_SocDup(OSThread *thread);
-// The function that gets the datagrams of the registered socket; it returns TRUE if it took the datagram
+// Receives borrowed socket-buffer data synchronously, with IRQs disabled; len is copied payload bytes,
+// capped by receive capacity. A nonzero return clears the pending length so storage can be reused; zero keeps it.
+// A blocked UDP reader is woken instead of invoking this callback.
 void CPS_SetUdpCallback(BOOL (*callback)(u8 *data, u32 len, CPSSoc *soc));
 // TCP's connect, 0 once connected; CPS_TcpConnect does it for the registered socket
 int CPSi_TcpConnect(CPSSoc *soc);
