@@ -189,13 +189,11 @@ int VCT_UpdateVad(u32 energy, u32 rms, u8 *level)
                 sCapture.speaking = 0;
                 sNoiseFloor.quietFrames = 0;
                 sNoiseFloor.index = 0;
-                result = 3;
-                goto done;
+                return 3;
             }
         }
         result = 2;
     }
-done:
     return result;
 }
 
