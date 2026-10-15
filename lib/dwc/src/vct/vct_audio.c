@@ -233,7 +233,7 @@ BOOL VCT_SubmitSamples(void *samples, int size)
     }
     packet->type = VCT_TYPE_VOICE;
     packet->sequence = sAudio.sequence++;
-    packet->timestamp = (u32)((s64)clock() / 64);
+    packet->timestamp = (u32)(clock() / 64);
     sSendQueue.writeIndex++;
     return TRUE;
 }
