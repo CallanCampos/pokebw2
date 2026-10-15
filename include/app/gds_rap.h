@@ -46,10 +46,12 @@ enum {
     GDS_RAP_HTTP_ERROR_OTHER,
 };
 
-// A function the client calls with the caller's work once a request has finished
+// Called by GdsRap_Main on completion or error; successful responses may undergo postprocessing first.
+// result points into the client's mutable work. It is not a separately allocated result, and later requests or
+// GdsRap_ClearResult can change it.
 typedef void (*GdsRapCallback)(void *work, const GdsRapResult *result);
 
-// The callbacks of the requests, and the work they are called with
+// Copied at initialization. The work pointer and callback code remain borrowed while callbacks can run.
 typedef struct {
     void *work;
     GdsRapCallback onUploadMusicalShotEnd;
@@ -107,7 +109,7 @@ struct GdsRapWork {
         // The number of the video that is downloaded or marked
         u64 dataNumber;
     };
-    // The buffer for the library's answer
+    // Owned response storage shared by requests; the photo/video getters return views into this allocation.
     void *response;
     BOOL unk3B0;
     BOOL isActive;
@@ -148,14 +150,18 @@ struct GdsRapWork {
 };
 
 // gds_rap.c
-// Starts the client, always returning TRUE
+// Starts the client, always returning TRUE. Copies init values and callbacks without retaining init itself;
+// gameData, loginBuffer and callbacks.work remain borrowed for later request/postprocessing/callback use.
 BOOL GdsRap_Init(GdsRapWork *gdsrap, const GdsRapInit *init);
+// Releases the library and shared response storage without checking GdsRap_IsIdle.
 void GdsRap_Exit(GdsRapWork *gdsrap);
-// Start a request, returning FALSE if another one is running. Upload a musical photo with the player's profile
+// Queue a request for later GdsRap_Main calls, returning FALSE if another is queued or awaiting completion.
+// Upload a musical photo with the player's profile; both input structures are copied before TRUE is returned.
 BOOL GdsRap_SendMusicalShotUpload(GdsRapWork *gdsrap, GdsProfile *profile, MusicalShot *shot);
 // Download the newest musical photos of a species
 BOOL GdsRap_SendMusicalShotDownload(GdsRapWork *gdsrap, u16 species);
-// Upload the loaded battle video, with the player's profile
+// Upload the loaded battle video, retaining it across checking, upload and postprocessing; it may be modified
+// in place. Copies profile into the Battle Recorder's VS-player storage now, without retaining that argument.
 BOOL GdsRap_SendBattleVideoUpload(GdsRapWork *gdsrap, GdsProfile *profile);
 // Download a list of the battle videos with a species, of a battle mode (an index of the client's table of modes)
 BOOL GdsRap_SendBattleVideoSearch(GdsRapWork *gdsrap, u16 species, u32 searchModeNo, u8 a3, u8 a4);
@@ -170,7 +176,7 @@ BOOL GdsRap_SendBattleVideoFavorite(GdsRapWork *gdsrap, u64 dataNumber);
 BOOL GdsRap_Main(GdsRapWork *gdsrap);
 // Takes an event of the Wi-Fi connection: an error ends the check of a video's Pokémon
 void GdsRap_OnNetEvent(GdsRapWork *gdsrap, int a1, int event, int a3);
-// Gives the result of the last request in result, and whether there is one
+// Gives a borrowed pointer to the client's result, and whether it is valid. Later requests/ClearResult can change it.
 BOOL GdsRap_GetResult(GdsRapWork *gdsrap, GdsRapResult **result);
 // Clears the result
 void GdsRap_ClearResult(GdsRapWork *gdsrap);
@@ -184,13 +190,16 @@ BOOL GdsRapResponse_BattleVideoUpload(GdsRapWork *gdsrap, POKE_NET_RESPONSE *res
 BOOL GdsRapResponse_BattleVideoSearch(GdsRapWork *gdsrap, POKE_NET_RESPONSE *res);
 BOOL GdsRapResponse_BattleVideoDownload(GdsRapWork *gdsrap, POKE_NET_RESPONSE *res);
 BOOL GdsRapResponse_BattleVideoFavorite(GdsRapWork *gdsrap, POKE_NET_RESPONSE *res);
-// What the last request received. Point to the downloaded musical photos, up to max of them, and give their number
+// What the last request received. Photo/video views below alias the shared response: a later receive can overwrite
+// their contents, and GdsRap_Exit frees their storage.
+// Point to the downloaded musical photos, up to max of them, and give their number
 int GdsRapResponse_GetMusicalShots(GdsRapWork *gdsrap, POKE_NET_GDS_MUSICALSHOT_SEND **list, int max);
 // The number that the server gave the uploaded video
 u64 GdsRapResponse_GetBattleVideoNumber(GdsRapWork *gdsrap);
-// Copy the videos of the downloaded list to list, up to max of them, and give their number
+// Copy the videos of the downloaded list to list, up to max of them, and give their number. May first repair each
+// source record's dataNumber/CRC in the shared response.
 int GdsRapResponse_GetBattleVideoList(GdsRapWork *gdsrap, POKE_NET_GDS_BATTLEDATA_OUTLINE *list, int max);
-// Points to the downloaded video, and gives the low word of its number
+// Points to the downloaded video, and gives the low word of its number. May repair its dataNumber/CRC in place.
 u32 GdsRapResponse_GetBattleVideo(GdsRapWork *gdsrap, BattleRecVideo **video);
 
 #endif // POKEBW2_APP_GDS_RAP_H
