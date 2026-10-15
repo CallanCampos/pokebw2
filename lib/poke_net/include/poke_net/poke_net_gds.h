@@ -176,12 +176,16 @@ void POKE_NET_GDS_Release(void);
 int POKE_NET_GDS_GetStatus(void);
 // The error, POKE_NET_GDS_LASTERROR_*, once the status is POKE_NET_GDS_STATUS_ERROR
 int POKE_NET_GDS_GetLastErrorCode(void);
-// The answer, a POKE_NET_RESPONSE, and its size, once the status is POKE_NET_GDS_STATUS_FINISHED
+// On FINISHED, the answer aliases the caller's response buffer after its four-byte length prefix.
+// The returned byte count excludes that prefix but includes POKE_NET_RESPONSE; no ownership transfers.
 void *POKE_NET_GDS_GetResponse(void);
 s32 POKE_NET_GDS_GetResponseSize(void);
-// The size of the buffer that the answer to a request needs, POKE_NET_GDS_REQCODE_ADMIN for the largest of all
+// Required response-buffer capacity in bytes, including the four-byte length prefix and POKE_NET_RESPONSE.
+// POKE_NET_GDS_REQCODE_ADMIN returns the maximum ordinary request capacity plus another eight bytes.
 s32 POKE_NET_GDS_GetResponseMaxSize(s32 reqno);
-// The requests, each of which returns FALSE if it could not start. response is the buffer for the answer
+// Requests copy their input data before returning; response remains caller-owned writable storage, borrowed
+// asynchronously while reception can occur, with the capacity given above. Serialize requests: FALSE is failure
+// to start, not cancellation of an earlier request, and ERROR alone is not an unconditional lifetime barrier.
 BOOL POKE_NET_GDS_MusicalShotRegist(POKE_NET_GDS_MUSICALSHOT_SEND *data, void *response);
 BOOL POKE_NET_GDS_MusicalShotGet(s32 monsno, void *response);
 BOOL POKE_NET_GDS_BattleDataRegist(BattleRecVideo *data, u8 *sign, s32 signSize, void *response);

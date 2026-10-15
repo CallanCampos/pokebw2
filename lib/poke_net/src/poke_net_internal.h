@@ -51,8 +51,12 @@ BOOL POKE_NET_Initialize(const char *url, u16 port, POKE_NET_REQUESTCOMMON_AUTH 
 void POKE_NET_Release(void);
 void POKE_NET_Clear(void);
 void POKE_NET_ThreadFunction(void);
+// size counts payload bytes; -1 selects the fixed request size including its headers. param is copied
+// synchronously; response is retained for asynchronous writes (see the public GDS buffer contract).
 BOOL POKE_NET_Request(u16 reqno, void *param, void *response, s32 size);
 int POKE_NET_GetStatus(void);
+// On FINISHED, returns borrowed response + 4 and a byte count excluding that length prefix, including
+// POKE_NET_RESPONSE. Otherwise returns NULL/-1; these status checks do not join a worker thread.
 void *POKE_NET_GetResponse(void);
 s32 POKE_NET_GetResponseSize(void);
 int POKE_NET_GetLastErrorCode(void);
