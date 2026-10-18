@@ -307,7 +307,6 @@ s8 *func_ov167_021bb4b4(BattleMon *mon, u32 stat, s8 *min, s8 *max);
 BOOL IsStatChangeValid(BattleMon *mon, u32 stat, s32 change);
 BOOL AreStatsLowered(BattleMon *mon);
 u32 func_ov167_021bb408(BattleMon *mon);
-extern const u32 data_ov167_021d7490[];
 BattleCondition ZeroConditionTurns(void);
 BOOL func_ov167_021ce168(BattleCondition condition);
 void SetMoveCondition(BattleMon *mon, u32 condition, BattleCondition value);

@@ -805,12 +805,14 @@ u32 GetAdditionalConditionFlag(BattleMon *mon, u32 flag) {
     return result;
 }
 
+static const u32 sSemiInvulnerableFlags[] = { 3, 5, 4, 6 };
+
 u32 func_ov167_021bb408(BattleMon *mon) {
     u32 i;
 
     for (i = 0; i < 4; i++) {
-        if (GetAdditionalConditionFlag(mon, data_ov167_021d7490[i])) {
-            return data_ov167_021d7490[i];
+        if (GetAdditionalConditionFlag(mon, sSemiInvulnerableFlags[i])) {
+            return sSemiInvulnerableFlags[i];
         }
     }
     return 0x10;
