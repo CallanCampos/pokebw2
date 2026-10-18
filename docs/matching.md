@@ -1751,6 +1751,9 @@ Narrowing shifts, reloads, recomputed addresses and folded constants.
 - Stores to fixed addresses fold into one literal each, `((u16 *)(HW_DB_BG_PLTT + 0x1c0))[9]` included. A literal kept as
   a base with offsets, `ldr r1, =0x50005c0; strh r0, [r1, #0x12]`, is a pointer local: the summary screen's
   `PStatus_InitText` sets two font colors through `GXRgb *pltt = (GXRgb *)(HW_DB_BG_PLTT + 0x1c0);`.
+- Two adjacent divider words merged into one `stmib` can come from separate 64-bit stores through plain pointers.
+  NitroSDK's `CP_SetDivImm64_32` merges the numerator's high word and denominator's low word in `MTX_FrustumW` and
+  `MTX_PerspectiveW` (`fx_mtx44.c`); separate `volatile` register assignments keep the stores apart and add 4 bytes.
 - A loop that computes an element's offset (`i * size`) once into a register of its own, using it both for stores
   through the array and for `&arr[i]` passed to a call, took the element's address into a pointer at the top of the
   body and used the pointer only for the call: the phrase input's `PMSIVMenu_SetupEditButtons` keeps

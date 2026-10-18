@@ -132,15 +132,13 @@ void MTX_FrustumW(fx32 t, fx32 b, fx32 l, fx32 r, fx32 n, fx32 f, fx32 scaleW, M
     mtx->m[3][1] = 0;
     mtx->m[3][3] = 0;
     invWidth = FX_GetDivResultFx64c();
-    reg_CP_DIV_NUMER = 0x100000000000LL;
-    reg_CP_DIV_DENOM = (u32)(t - b);
+    CP_SetDivImm64_32(0x100000000000LL, (u32)(t - b));
     if (scaleW != FX32_ONE) {
         invWidth = invWidth * scaleW / FX32_ONE;
     }
     mtx->m[0][0] = (fx32)((invWidth * n2 + 0x80000000LL) >> 32);
     invHeight = FX_GetDivResultFx64c();
-    reg_CP_DIV_NUMER = 0x100000000000LL;
-    reg_CP_DIV_DENOM = (u32)(n - f);
+    CP_SetDivImm64_32(0x100000000000LL, (u32)(n - f));
     if (scaleW != FX32_ONE) {
         invHeight = invHeight * scaleW / FX32_ONE;
     }
@@ -160,8 +158,7 @@ void MTX_PerspectiveW(fx32 fovySin, fx32 fovyCos, fx32 aspect, fx32 n, fx32 f, f
     fx64 invDepth;
 
     cot = FX_Div(fovyCos, fovySin);
-    reg_CP_DIV_NUMER = 0x100000000000LL;
-    reg_CP_DIV_DENOM = (u32)(n - f);
+    CP_SetDivImm64_32(0x100000000000LL, (u32)(n - f));
     if (scaleW != FX32_ONE) {
         cot = cot * scaleW / FX32_ONE;
     }
@@ -179,8 +176,7 @@ void MTX_PerspectiveW(fx32 fovySin, fx32 fovyCos, fx32 aspect, fx32 n, fx32 f, f
     mtx->m[3][1] = 0;
     mtx->m[3][3] = 0;
     invDepth = FX_GetDivResultFx64c();
-    reg_CP_DIV_NUMER = (u64)(u32)cot << 32;
-    reg_CP_DIV_DENOM = (u32)aspect;
+    CP_SetDivImm64_32((u64)(u32)cot << 32, (u32)aspect);
     if (scaleW != FX32_ONE) {
         invDepth = invDepth * scaleW / FX32_ONE;
     }

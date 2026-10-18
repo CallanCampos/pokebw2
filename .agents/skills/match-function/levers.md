@@ -511,6 +511,8 @@ text to `grep -n` there. Entries without a key come from later work and still be
   inline accessor recomputes it. (matching.md: "computed before calls is reused")
 - A constant base address with offsets where MWCC folds each store into its own literal: a pointer local.
   (matching.md: "Stores to fixed addresses")
+- Two divider stores where the original has one `stmib` across the numerator/denominator boundary: the SDK's
+  `CP_SetDivImm64_32` uses plain 64-bit stores. (matching.md: "Two adjacent divider words")
 - A hardware address built with shifts and spilled, where ours loads it from the pool: the SDK inline that returns
   it, such as `G2_GetOBJCharPtr()`. (matching.md: "A hardware address that the original builds with shifts")
 - Stores whose base register is another element than the one written: index the array, or write through a pointer
