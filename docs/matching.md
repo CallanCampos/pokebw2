@@ -3741,7 +3741,12 @@ Narrowing shifts, reloads, recomputed addresses and folded constants.
   doesn't have, as their own function-local statics, which an unemitted handler takes with it. Made globals read by
   one unemitted function, in a declaration order found from the size sort, about 47 of them reproduce both sections
   byte for byte in both versions (the live handlers' line patterns as function-local statics); that isn't kept, as
-  it names data Game Freak kept local and invents a reader for it.
+  it names data Game Freak kept local and invents a reader for it. The stripping itself can be emulated on one object.
+  MWCC emits each function and each unpooled data object in a section of its own, so dropping the sections of named
+  dead functions, and the unpooled data only they reach, before the `-nodead` link leaves what the original link
+  left: their pooled statics stay, their own literals and local-initializer templates go. A scratch prototype did
+  this; `mwldarm -partial` keeps every section, so it can't. What blocks wipe_sub.c (its row) and overlay 260's three
+  dead-strip rows is what the dead code was, not the link.
 - Tables that only code the linker dropped read can be kept in the shared section as globals read by unemitted
   static functions. `mbp.c` (overlay 181) keeps NitroSDK's demo tables of state and callback names this way, after
   its heap ID and before their strings: a `static` table read only by an unemitted function is dropped with it, and a
