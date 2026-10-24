@@ -1546,6 +1546,26 @@ Same instructions, scheduled in another order.
   the original stores the sum where it is written and adds the 8 to its spill slot. Folding the 8 into the other
   operand, `dataOffset = 8 + entry.start;` and then `fimgOffset + dataOffset`, keeps the sum where it is written, as
   any use that isn't a copy does, but puts the 8 on `entry.start`'s register.
+  The move is the back end's AddressModePropagation (mwccarm 1.1p1's `AddressModePropagation.c`, entry at file offset
+  0x5255e0), at every level above 0, after the CSE that follows code motion. It moves an `add rd, rm, rn` into its uses
+  only when every use is a register copy, an add of 0 or a load or store based on `rd`, when no instruction in between
+  redefines `rm` or `rn`, and when no flag-reading instruction (`b<cond>`, `adc`, `sbc`) follows before one that sets
+  the flags, since Thumb's `adds` sets them: the 64-bit carrier's add and `adc` keep the sum for that reason. The front
+  end turns a `+=` with a single use into a copy plus an add, so a straight-line `x += 8` before its use always reaches
+  the pass as a copy. With the pass's call NOPped in a copy of the compiler, `ArchiveMoveImageTop`'s `fimgOffset += 8`
+  form (`fntbOffset` declared first) compiles to the original byte for byte in both versions; the same patch breaks 11
+  matching functions in the first 15 source files, so the game's compiler had the pass, and the original source kept the
+  sum out of it in a way not yet found.
+- Instruction selection starts a new basic block before a statement once the current block holds more than 100 PCode
+  instructions, counting every temporary, call argument and dead store (mwccarm 1.1p1's check at file offset 0x50dcd0,
+  the threshold byte at 0x50dd11). At -O2 and up block merging folds each cut back into the block before it, unless that
+  block ends with a call whose value is discarded. Value numbering shares a constant across an unmerged cut, but the
+  peephole that turns a copy of a register holding a small constant back into `movs rd, #imm` works within one block, so
+  uses behind the cut stay `adds rd, rm, #0`, and padding before a run of calls moves where such copies start.
+  `CtvtTalk_Enter`'s copies of r7's 1 start after the talk button's `ClActor_SetVisible` because the original had a cut
+  there. An out-parameter actor helper (`ctvt_call.c`'s shape) puts the cut there in ours too, but the register
+  allocator then spills the constant and regenerates it at each use, 14 bytes longer: its spill cost counts the copies
+  against a constant (file offset 0x5b0420).
 - A local of another type than the callee parameters it is passed to is computed at its first use, past a call in
   between, where a local of their type is computed where it is written: `g3d_text_draw.c`'s
   `G3DTextDraw_StringToTexture` computes `size` before `GX_BeginLoadTex()`, as the original does, only as a
