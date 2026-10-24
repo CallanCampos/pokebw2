@@ -1543,7 +1543,9 @@ Same instructions, scheduled in another order.
   the +8 is conditional or when an operand is redefined on one path to the same use (`if (b) { a = 0; }`); a
   redefinition on every path, `a += 12`, goes into a new register and leaves the old value to the moved sum. `arc_tool.c`'s `ArchiveMoveImageTop` writes
   `fimgOffset = fntbOffset + value;` before a read and `fimgOffset += 8;` after it, and is 4 bytes short for it:
-  the original stores the sum where it is written and adds the 8 to its spill slot.
+  the original stores the sum where it is written and adds the 8 to its spill slot. Folding the 8 into the other
+  operand, `dataOffset = 8 + entry.start;` and then `fimgOffset + dataOffset`, keeps the sum where it is written, as
+  any use that isn't a copy does, but puts the 8 on `entry.start`'s register.
 - A local of another type than the callee parameters it is passed to is computed at its first use, past a call in
   between, where a local of their type is computed where it is written: `g3d_text_draw.c`'s
   `G3DTextDraw_StringToTexture` computes `size` before `GX_BeginLoadTex()`, as the original does, only as a
